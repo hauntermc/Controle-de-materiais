@@ -1,0 +1,126 @@
+from sqlalchemy import Column, Integer, String, ForeignKey, Date, Float
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+
+Base = declarative_base()
+
+# Produto
+class Produto(Base):
+    __tablename__ = 'produtos'
+    
+    id = Column(Integer, primary_key=True)
+    codigo = Column(String, unique=True, nullable=False)
+    nome = Column(String, nullable=False)
+    descricao = Column(String)
+
+    def __repr__(self):
+        return f"<Produto(codigo={self.codigo}, nome={self.nome})>"
+
+# Técnico
+class Tecnico(Base):
+    __tablename__ = 'tecnicos'
+    
+    id = Column(Integer, primary_key=True)
+    nome = Column(String, nullable=False)
+    matricula = Column(String, unique=True, nullable=False)
+    contato = Column(String)
+
+    def __repr__(self):
+        return f"<Tecnico(nome={self.nome}, matricula={self.matricula})>"
+
+# Usuário
+class Usuario(Base):
+    __tablename__ = 'usuarios'
+    
+    id = Column(Integer, primary_key=True)
+    nome = Column(String, nullable=False)
+    login = Column(String, unique=True, nullable=False)
+    senha = Column(String, nullable=False)
+
+    def __repr__(self):
+        return f"<Usuario(nome={self.nome}, login={self.login})>"
+
+# Fornecedor
+class Fornecedor(Base):
+    __tablename__ = 'fornecedores'
+    
+    id = Column(Integer, primary_key=True)
+    nome = Column(String, nullable=False)
+    cnpj = Column(String, unique=True, nullable=False)
+
+    def __repr__(self):
+        return f"<Fornecedor(nome={self.nome}, cnpj={self.cnpj})>"
+
+# Entrada de Produtos
+class EntradaProduto(Base):
+    __tablename__ = 'entradas_produtos'
+    
+    id = Column(Integer, primary_key=True)
+    nota_fiscal = Column(String, nullable=False)
+    produto_id = Column(Integer, ForeignKey('produtos.id'), nullable=False)
+    produto = relationship('Produto')
+    quantidade = Column(Float, nullable=False)
+
+    def __repr__(self):
+        return f"<EntradaProduto(nota_fiscal={self.nota_fiscal}, produto={self.produto.nome})>"
+
+# Devolução
+class Devolucao(Base):
+    __tablename__ = 'devolucoes'
+    
+    id = Column(Integer, primary_key=True)
+    ordem_servico = Column(String, nullable=False)
+    produto_id = Column(Integer, ForeignKey('produtos.id'), nullable=False)
+    produto = relationship('Produto')
+    quantidade = Column(Float, nullable=False)
+
+    def __repr__(self):
+        return f"<Devolucao(ordem_servico={self.ordem_servico}, produto={self.produto.nome})>"
+
+# Requisição de Materiais
+class RequisicaoMaterial(Base):
+    __tablename__ = 'requisicoes_materiais'
+    
+    id = Column(Integer, primary_key=True)
+    ordem_servico = Column(String, nullable=False)
+    tecnico_id = Column(Integer, ForeignKey('tecnicos.id'), nullable=False)
+    tecnico = relationship('Tecnico')
+    local_destino = Column(String, nullable=False)
+    usuario_id = Column(Integer, ForeignKey('usuarios.id'), nullable=False)
+    usuario = relationship('Usuario')
+    data = Column(Date, nullable=False)
+    
+    # Relação muitos-para-muitos entre Requisição e Produto
+    produtos = relationship('RequisicaoProduto', back_populates='requisicao')
+
+    def __repr__(self):
+        return f"<RequisicaoMaterial(ordem_servico={self.ordem_servico}, tecnico={self.tecnico.nome})>"
+
+class RequisicaoProduto(Base):
+    __tablename__ = 'requisicoes_produtos'
+
+    id = Column(Integer, primary_key=True)
+    requisicao_id = Column(Integer, ForeignKey('requisicoes_materiais.id'))
+    requisicao = relationship('RequisicaoMaterial', back_populates='produtos')
+    produto_id = Column(Integer, ForeignKey('produtos.id'))
+    produto = relationship('Produto')
+    quantidade = Column(Float, nullable=False)
+
+    def __repr__(self):
+        return f"<RequisicaoProduto(requisicao_id={self.requisicao_id}, produto={self.produto.nome}, quantidade={self.quantidade})>"
+
+# Movimentações
+class Movimentacao(Base):
+    __tablename__ = 'movimentacoes'
+    
+    id = Column(Integer, primary_key=True)
+    tipo_movimentacao = Column(String, nullable=False)
+    quantidade = Column(Float, nullable=False)
+    tecnico_id = Column(Integer, ForeignKey('tecnicos.id'))
+    tecnico = relationship('Tecnico')
+    data = Column(Date, nullable=False)
+    produto_id = Column(Integer, ForeignKey('produtos.id'))
+    produto = relationship('Produto')
+
+    def __repr__(self):
+        return f"<Movimentacao(tipo_movimentacao={self.tipo_movimentacao}, quantidade={self.quantidade})>"
