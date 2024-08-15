@@ -1,0 +1,89 @@
+from fpdf import FPDF
+from datetime import date
+
+class Material:
+    def __init__(self, nome):
+        self.nome = nome
+
+class Tecnico:
+    def __init__(self, nome):
+        self.nome = nome
+
+class RetiradaMaterial:
+    def __init__(self, produto, quantidade, data, tecnico, ordem_servico, local):
+        self.produto = produto
+        self.quantidade = quantidade
+        self.data = data
+        self.tecnico = tecnico
+        self.ordem_servico = ordem_servico
+        self.local = local
+
+# Criando uma instância com dados de exemplo
+produto = Material(nome="Cabo de Rede")
+tecnico = Tecnico(nome="João Silva")
+retirada = RetiradaMaterial(produto=produto, 
+                            quantidade=100, 
+                            data=date.today(), 
+                            tecnico=tecnico, 
+                            ordem_servico="OS123456", 
+                            local="Almoxarifado Central")
+
+class PDF(FPDF):
+    def header(self):
+        self.set_font('Arial', 'B', 12)
+        self.cell(0, 10, 'Poder Judiciário do Estado do Rio de Janeiro', 0, 1, 'C')
+        self.cell(0, 10, 'Departamento de Segurança Eletrônica e de Telecomunicações', 0, 1, 'C')
+        self.cell(0, 10, 'Setor de Controle de Materiais', 0, 1, 'C')
+        self.ln(10)
+       
+        self.set_font('Arial', 'B', 12)
+        self.cell(0, 10, 'REQUISIÇÃO DE MATERIAIS', 0, 1, 'C')
+
+    def chapter_body(self, retirada):
+        # Cabeçalhos da tabela com fonte 10 e negrito
+        self.set_font('Arial', 'B', 8)
+        col_width = 30
+        row_height = 10
+
+        # Calcula a largura total da tabela
+        total_width = col_width * 6
+
+        # Centraliza a tabela na página
+        start_x = (self.w - total_width) / 2
+        self.set_x(start_x)
+
+        self.cell(col_width, row_height, "Material", border=1, align='C')
+        self.cell(col_width, row_height, "Quantidade", border=1, align='C')
+        self.cell(col_width, row_height, "Data", border=1, align='C')
+        self.cell(col_width, row_height, "Técnico", border=1, align='C')
+        self.cell(col_width, row_height, "Ordem de Serviço", border=1, align='C')
+        self.cell(col_width, row_height, "Local", border=1, align='C')
+        self.ln(row_height)
+
+        # Dados da tabela com fonte 6 e normal
+        self.set_font('Arial', '', 6)
+        self.set_x(start_x)  # Centraliza novamente para a linha de dados
+        self.cell(col_width, row_height, retirada.produto.nome, border=1, align='C')
+        self.cell(col_width, row_height, str(retirada.quantidade), border=1, align='C')
+        self.cell(col_width, row_height, retirada.data.strftime('%d/%m/%Y'), border=1, align='C')
+        self.cell(col_width, row_height, retirada.tecnico.nome, border=1, align='C')
+        self.cell(col_width, row_height, retirada.ordem_servico, border=1, align='C')
+        self.cell(col_width, row_height, retirada.local, border=1, align='C')
+        self.ln(row_height)
+        self.ln(150)
+
+    def footer(self):
+        # Largura total da célula (igual à largura da página)
+        total_width = self.w - 40  # -20 para considerar as margens
+
+        # Definindo a posição do rodapé
+        self.set_y(-60)  # Aproximadamente 60 unidades do fundo da página
+        self.set_font('Arial', 'B', 10)
+        self.cell(total_width, 10, 'Técnico Responsável: _______________________________________________________________', 0, 1, 'L')
+        self.cell(total_width, 10, 'Supervisor Técnico: _________________________________________________________________', 0, 1, 'L')
+        self.cell(total_width, 10, 'Serviço de Controle de Materiais:______________________________________________________', 0, 1, 'L')
+
+pdf = PDF()
+pdf.add_page()
+pdf.chapter_body(retirada)  # Passa a instância criada aqui
+pdf.output('informacoes_tabela_centralizada.pdf')
